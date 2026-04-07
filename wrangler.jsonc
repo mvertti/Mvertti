@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "mvertt1",
+  "compatibility_date": "2026-04-07",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "Mvertti"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
