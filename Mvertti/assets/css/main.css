@@ -3447,17 +3447,16 @@ input, select, textarea {
 		display: -webkit-flex;
 		display: -ms-flex;
 		display: flex;
-		padding: 6em 0 2em 0 ;
+		justify-content: center;
+		padding: 28em 0 23em 0 ;
 		background-attachment: fixed;
 		background-position: center;
 		background-repeat: no-repeat;
 		background-size: cover;
 		border-bottom: 0 !important;
 		cursor: default;
-		height: 60vh;
+		min-height: 100vh;
 		margin-bottom: -3.25em;
-		max-height: 32em;
-		min-height: 22em;
 		position: relative;
 		top: -3.25em;
 	}
@@ -3595,7 +3594,7 @@ input, select, textarea {
 		@media screen and (max-width: 1280px) {
 
 			#banner {
-				background-attachment: scroll;
+				background-attachment: fixed;
 			}
 
 		}
@@ -3612,16 +3611,18 @@ input, select, textarea {
 			}
 
 				#banner h1 {
+					margin-top: 6em;
 					font-size: 2em;
 				}
 
 				#banner > .inner .content {
 					display: block;
+					margin-bottom: 17em;
 				}
 
 					#banner > .inner .content > * {
 						margin-right: 0;
-						margin-bottom: 2em;
+						margin-bottom: 3em;
 					}
 
 				#banner.major {
