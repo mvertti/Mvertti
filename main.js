@@ -137,7 +137,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 3500);
 
     let currentStep = 0; 
-    // AGREGAMOS 1 PASO EXTRA AL FINAL PARA LA PANTALLA DE DESPEDIDA (+3 en total)
     const totalSteps = totalSections + 3; 
     let isAnimating = false;
     let isExpanded = false; 
@@ -146,6 +145,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroScreen = document.getElementById('hero-screen');
     const galleryScreen = document.getElementById('gallery-screen');
 
+    // ==========================================
+    // CONTROL PARA ESCRITORIO (MOUSE / TRACKPAD)
+    // ==========================================
     window.addEventListener('wheel', (e) => {
         if(document.body.classList.contains('show-about') || document.body.classList.contains('show-services')) return;
 
@@ -157,7 +159,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         let isHorizontalSwipe = Math.abs(e.deltaX) > Math.abs(e.deltaY);
-        // Validamos que el swipe lateral solo funcione en las galerias, no en la de despedida
         if (isHorizontalSwipe && currentStep >= 2 && currentStep < totalSteps - 1) {
             if (Math.abs(e.deltaX) > 20) handleScrollLogic(e.deltaX);
         } else {
@@ -165,26 +166,14 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    let touchStartY = 0;
-    window.addEventListener('touchstart', e => { 
-        if(document.body.classList.contains('show-about') || document.body.classList.contains('show-services')) return;
-        touchStartY = e.changedTouches[0].screenY; 
-    });
-    window.addEventListener('touchend', e => {
-        if(document.body.classList.contains('show-about') || document.body.classList.contains('show-services') || isExpanded) return; 
-        
-        const touchEndY = e.changedTouches[0].screenY;
-        const swipeDistance = touchStartY - touchEndY; 
-        if (Math.abs(swipeDistance) > 40) handleScrollLogic(swipeDistance);
-    });
-
+    // Función exclusiva de scroll para escritorio
     function handleScrollLogic(delta) {
         if(isAnimating) return;
 
         if (currentStep === 0) {
             heroClipRadius -= delta * 0.1; 
             if (heroClipRadius > 100) heroClipRadius = 100; 
-            if (heroClipRadius <= 0 || (delta > 100 && window.innerWidth <= 768)) {
+            if (heroClipRadius <= 0) {
                 heroClipRadius = 0; currentStep = 1; updateStepUI();
                 isAnimating = true; setTimeout(() => { isAnimating = false; }, 800); 
             }
@@ -207,6 +196,91 @@ document.addEventListener("DOMContentLoaded", () => {
             if (currentStep > 1) changeStep(currentStep - 1);
         }
     }
+
+    // ==========================================
+    // NUEVO MOTOR TÁCTIL PARA CELULARES (MÓVIL)
+    // ==========================================
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    window.addEventListener('touchstart', e => { 
+        if(document.body.classList.contains('show-about') || document.body.classList.contains('show-services')) return;
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY; 
+    }, { passive: true });
+
+    window.addEventListener('touchmove', e => {
+        if(document.body.classList.contains('show-about') || document.body.classList.contains('show-services') || isExpanded || isAnimating) return;
+        
+        // Animación fluida interactiva del Hero al dedo en pantallas móviles
+        if (currentStep === 0) {
+            const currentY = e.changedTouches[0].screenY;
+            const deltaY = touchStartY - currentY; // Positivo si arrastra hacia arriba
+            
+            if (deltaY > 0) {
+                const swipePercent = (deltaY / window.innerHeight) * 100;
+                heroClipRadius = 100 - (swipePercent * 2.5); // Aumentamos sensibilidad
+                if (heroClipRadius < 0) heroClipRadius = 0;
+                heroScreen.style.clipPath = `circle(${heroClipRadius}% at 50% 50%)`;
+            }
+        }
+    }, { passive: true });
+
+    window.addEventListener('touchend', e => {
+        if(document.body.classList.contains('show-about') || document.body.classList.contains('show-services') || isExpanded || isAnimating) return; 
+        
+        const touchEndX = e.changedTouches[0].screenX;
+        const touchEndY = e.changedTouches[0].screenY;
+        
+        const deltaX = touchStartX - touchEndX; // Positivo significa deslizó a la izquierda
+        const deltaY = touchStartY - touchEndY; // Positivo significa deslizó hacia arriba
+        
+        // Finalizar interacción del Hero con un umbral muy bajo (no tienen que deslizar tanto)
+        if (currentStep === 0) {
+            if (deltaY > 50) { 
+                heroClipRadius = 0; currentStep = 1; updateStepUI();
+                isAnimating = true; setTimeout(() => { isAnimating = false; }, 800);
+                heroScreen.style.clipPath = `circle(0% at 50% 50%)`;
+            } else {
+                heroClipRadius = 100;
+                heroScreen.style.transition = 'clip-path 0.5s ease';
+                heroScreen.style.clipPath = `circle(100% at 50% 50%)`;
+                setTimeout(() => heroScreen.style.transition = 'none', 500);
+            }
+            return;
+        }
+
+        const mobileSwipeThreshold = 40; // Movimiento ultra-ligero para cambiar secciones
+
+        // Determinar si fue un swipe Horizontal o Vertical
+        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+            // FUE UN SWIPE HORIZONTAL
+            if (Math.abs(deltaX) > mobileSwipeThreshold && currentStep >= 2 && currentStep < totalSteps - 1) {
+                if (deltaX > 0) {
+                    changeStep(currentStep + 1); // Izquierda -> Avanza
+                } else {
+                    changeStep(currentStep - 1); // Derecha -> Retrocede
+                }
+            }
+        } else {
+            // FUE UN SWIPE VERTICAL
+            if (Math.abs(deltaY) > mobileSwipeThreshold) {
+                if (deltaY > 0) {
+                    if (currentStep < totalSteps - 1) changeStep(currentStep + 1);
+                } else {
+                    if (currentStep === 1) {
+                        currentStep = 0; isAnimating = true; heroClipRadius = 100;
+                        heroScreen.style.transition = 'clip-path 1s cubic-bezier(0.77, 0, 0.175, 1)';
+                        heroScreen.style.clipPath = `circle(100% at 50% 50%)`;
+                        updateStepUI();
+                        setTimeout(() => { heroScreen.style.transition = 'none'; isAnimating = false; }, 1000);
+                    } else if (currentStep > 1) {
+                        changeStep(currentStep - 1);
+                    }
+                }
+            }
+        }
+    });
 
     function changeStep(newStep) {
         isAnimating = true;
@@ -233,6 +307,7 @@ document.addEventListener("DOMContentLoaded", () => {
             galleryScreen.classList.remove('active'); 
             quoteScreen.classList.remove('pushed-up'); 
         } else if (currentStep >= 2 && currentStep < totalSteps - 1) {
+            
             // NAVEGANDO POR LAS GALERÍAS
             galleryScreen.classList.remove('final-step');
             if (isExpanded) {
@@ -245,17 +320,22 @@ document.addEventListener("DOMContentLoaded", () => {
             quoteScreen.classList.add('pushed-up'); 
             galleryScreen.classList.add('active'); 
             updateGallery(currentStep - 2);
+        
         } else if (currentStep === totalSteps - 1) {
+            
             // PANTALLA DE DESPEDIDA
             galleryScreen.classList.add('final-step');
             logoWhite.style.opacity = '0'; logoBlack.style.opacity = '1';
             logoWhite.style.pointerEvents = 'none'; logoBlack.style.pointerEvents = 'auto';
             quoteScreen.classList.add('pushed-up');
             galleryScreen.classList.add('active');
+            
+            // Hacemos que el último título se deslice hacia arriba para ocultarse
+            const titlesTrack = document.getElementById('gallery-titles-track');
+            titlesTrack.style.transform = `translateY(-${PORTFOLIO_DATA.sections.length * 120}px)`;
         }
     }
 
-    // === CINTA INFINITA 360 (DERECHA E IZQUIERDA) ===
     function updateGallery(index) {
         if(!isExpanded) frame.style.borderRadius = generateAmorphousShape();
         galleryScreen.style.setProperty('--gallery-bg', PORTFOLIO_DATA.sections[index].bgColor);
@@ -287,12 +367,10 @@ document.addEventListener("DOMContentLoaded", () => {
     hTrack.addEventListener('scroll', () => {
         if(!isExpanded) return;
         
-        // Carga infinita hacia la derecha
         if (hTrack.scrollWidth - (hTrack.scrollLeft + hTrack.clientWidth) < 500) {
             appendHorizontalImages(currentStep - 2); 
         }
         
-        // Carga infinita hacia la izquierda
         if (hTrack.scrollLeft < 500 && !isPrepending) {
             prependHorizontalImages(currentStep - 2); 
         }
@@ -313,12 +391,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const oldScrollLeft = hTrack.scrollLeft;
         const galleryPhotos = PORTFOLIO_DATA.sections[sectionIndex].gallery;
         
-        // Añadimos en orden inverso para que encajen al principio
         for (let i = galleryPhotos.length - 1; i >= 0; i--) {
             createImg(galleryPhotos[i], hTrack, true);
         }
 
-        // Compensamos el scroll para evitar el "salto visual"
         const newScrollWidth = hTrack.scrollWidth;
         hTrack.scrollLeft = oldScrollLeft + (newScrollWidth - oldScrollWidth);
         
@@ -398,7 +474,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             frame.classList.add('expanded');
             
-            // Forzamos inyectar un bloque hacia la izquierda para que al abrir la galería ya haya fotos previas
             prependHorizontalImages(currentStep - 2);
             
             setTimeout(() => {
