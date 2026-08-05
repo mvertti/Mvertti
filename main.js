@@ -32,7 +32,7 @@ const PORTFOLIO_DATA = {
     ],
     sections: [
         { title: "FINE ART", bgColor: "#ffffff", mainPhoto: "img/fineart6.jpg", gallery: ["img/fineart1.jpg", "img/fineart2.jpg", "img/fineart3.jpg", "img/fineart4.jpg", "img/fineart5.jpg", "img/fineart6.jpg", "img/fineart7.jpg"] },
-        { title: "FANTASÍA", bgColor: "#f0ecf2", mainPhoto: "img/pic2.jpg", gallery: ["img/fantasía1.jpg", "img/fantasía2.jpg", "img/fantasía3.jpg", "img/fantasía4.jpg", "img/fantasía5.jpg", "img/fantasía6.jpg"] },
+        { title: "FANTASÍA", bgColor: "#f0ecf2", mainPhoto: "img/pic2.jpg", gallery: ["img/fantasía1.jpg", "img/fantasía2.jpg", "img/fantasía3.jpg", "img/fantasía4.jpg", "img/fantasía5.jpg", "img/fantasía6.jpg"] },
         { title: "DÍA DE MUERTOS", bgColor: "#f0ecf2", mainPhoto: "img/pic3.jpg", gallery: ["img/diademuertos 1.jpg", "img/diademuertos 2.jpg", "img/diademuertos 3.jpg", "img/diademuertos 4.jpg", "img/diademuertos 5.jpg", "img/diademuertos 6.jpg"] },
         { title: "NAVIDAD", bgColor: "#f0ecf2", mainPhoto: "img/pic4.jpg", gallery: ["img/navidad1.jpg", "img/navidad2.jpg", "img/navidad3.jpg", "img/navidad4.jpg", "img/navidad5.jpg", "img/navidad6.jpg"] },
         { title: "CANCER DE MAMA", bgColor: "#f0ecf2", mainPhoto: "img/pic5.jpg", gallery: ["img/cm1.jpg", "img/cm2.jpg", "img/cm3.jpg", "img/cm4.jpg", "img/cm5.jpg", "img/cm6.jpg"] },
@@ -48,7 +48,6 @@ const PORTFOLIO_DATA = {
 
 document.addEventListener("DOMContentLoaded", () => {
     
-    // === LOGOS DINÁMICOS CON CROSSFADE ===
     const logoWhite = document.getElementById('global-logo');
     logoWhite.src = PORTFOLIO_DATA.logos.blanco;
     logoWhite.style.opacity = '1';
@@ -145,9 +144,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const heroScreen = document.getElementById('hero-screen');
     const galleryScreen = document.getElementById('gallery-screen');
 
-    // ==========================================
-    // CONTROL PARA ESCRITORIO (MOUSE / TRACKPAD)
-    // ==========================================
     window.addEventListener('wheel', (e) => {
         if(document.body.classList.contains('show-about') || document.body.classList.contains('show-services')) return;
 
@@ -166,7 +162,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Función exclusiva de scroll para escritorio
     function handleScrollLogic(delta) {
         if(isAnimating) return;
 
@@ -174,8 +169,11 @@ document.addEventListener("DOMContentLoaded", () => {
             heroClipRadius -= delta * 0.1; 
             if (heroClipRadius > 100) heroClipRadius = 100; 
             if (heroClipRadius <= 0) {
+                // SE AGREGA TRANSICIÓN SUAVE EN SWIPE RÁPIDO
+                heroScreen.style.transition = 'clip-path 0.85s cubic-bezier(0.77, 0, 0.175, 1)';
                 heroClipRadius = 0; currentStep = 1; updateStepUI();
-                isAnimating = true; setTimeout(() => { isAnimating = false; }, 800); 
+                isAnimating = true; 
+                setTimeout(() => { isAnimating = false; heroScreen.style.transition = 'none'; }, 850); 
             }
             heroScreen.style.clipPath = `circle(${heroClipRadius}% at 50% 50%)`;
             return;
@@ -183,10 +181,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (currentStep === 1 && delta < 0) {
             currentStep = 0; isAnimating = true; heroClipRadius = 100; 
-            heroScreen.style.transition = 'clip-path 1s cubic-bezier(0.77, 0, 0.175, 1)';
+            heroScreen.style.transition = 'clip-path 0.85s cubic-bezier(0.77, 0, 0.175, 1)';
             heroScreen.style.clipPath = `circle(${heroClipRadius}% at 50% 50%)`;
             updateStepUI();
-            setTimeout(() => { heroScreen.style.transition = 'none'; isAnimating = false; }, 1000);
+            setTimeout(() => { heroScreen.style.transition = 'none'; isAnimating = false; }, 850);
             return;
         }
 
@@ -197,9 +195,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // ==========================================
-    // NUEVO MOTOR TÁCTIL PARA CELULARES (MÓVIL)
-    // ==========================================
     let touchStartX = 0;
     let touchStartY = 0;
 
@@ -212,14 +207,13 @@ document.addEventListener("DOMContentLoaded", () => {
     window.addEventListener('touchmove', e => {
         if(document.body.classList.contains('show-about') || document.body.classList.contains('show-services') || isExpanded || isAnimating) return;
         
-        // Animación fluida interactiva del Hero al dedo en pantallas móviles
         if (currentStep === 0) {
             const currentY = e.changedTouches[0].screenY;
-            const deltaY = touchStartY - currentY; // Positivo si arrastra hacia arriba
+            const deltaY = touchStartY - currentY;
             
             if (deltaY > 0) {
                 const swipePercent = (deltaY / window.innerHeight) * 100;
-                heroClipRadius = 100 - (swipePercent * 2.5); // Aumentamos sensibilidad
+                heroClipRadius = 100 - (swipePercent * 2.5); 
                 if (heroClipRadius < 0) heroClipRadius = 0;
                 heroScreen.style.clipPath = `circle(${heroClipRadius}% at 50% 50%)`;
             }
@@ -232,15 +226,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const touchEndX = e.changedTouches[0].screenX;
         const touchEndY = e.changedTouches[0].screenY;
         
-        const deltaX = touchStartX - touchEndX; // Positivo significa deslizó a la izquierda
-        const deltaY = touchStartY - touchEndY; // Positivo significa deslizó hacia arriba
+        const deltaX = touchStartX - touchEndX; 
+        const deltaY = touchStartY - touchEndY; 
         
-        // Finalizar interacción del Hero con un umbral muy bajo (no tienen que deslizar tanto)
         if (currentStep === 0) {
             if (deltaY > 50) { 
+                // SOLUCIÓN: TRANSICIÓN SUAVE SI EL USUARIO SUELTA RÁPIDO
+                heroScreen.style.transition = 'clip-path 0.85s cubic-bezier(0.77, 0, 0.175, 1)';
                 heroClipRadius = 0; currentStep = 1; updateStepUI();
-                isAnimating = true; setTimeout(() => { isAnimating = false; }, 800);
+                isAnimating = true; 
                 heroScreen.style.clipPath = `circle(0% at 50% 50%)`;
+                setTimeout(() => { isAnimating = false; heroScreen.style.transition = 'none'; }, 850);
             } else {
                 heroClipRadius = 100;
                 heroScreen.style.transition = 'clip-path 0.5s ease';
@@ -250,30 +246,27 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        const mobileSwipeThreshold = 40; // Movimiento ultra-ligero para cambiar secciones
+        const mobileSwipeThreshold = 40; 
 
-        // Determinar si fue un swipe Horizontal o Vertical
         if (Math.abs(deltaX) > Math.abs(deltaY)) {
-            // FUE UN SWIPE HORIZONTAL
             if (Math.abs(deltaX) > mobileSwipeThreshold && currentStep >= 2 && currentStep < totalSteps - 1) {
                 if (deltaX > 0) {
-                    changeStep(currentStep + 1); // Izquierda -> Avanza
+                    changeStep(currentStep + 1); 
                 } else {
-                    changeStep(currentStep - 1); // Derecha -> Retrocede
+                    changeStep(currentStep - 1); 
                 }
             }
         } else {
-            // FUE UN SWIPE VERTICAL
             if (Math.abs(deltaY) > mobileSwipeThreshold) {
                 if (deltaY > 0) {
                     if (currentStep < totalSteps - 1) changeStep(currentStep + 1);
                 } else {
                     if (currentStep === 1) {
                         currentStep = 0; isAnimating = true; heroClipRadius = 100;
-                        heroScreen.style.transition = 'clip-path 1s cubic-bezier(0.77, 0, 0.175, 1)';
+                        heroScreen.style.transition = 'clip-path 0.85s cubic-bezier(0.77, 0, 0.175, 1)';
                         heroScreen.style.clipPath = `circle(100% at 50% 50%)`;
                         updateStepUI();
-                        setTimeout(() => { heroScreen.style.transition = 'none'; isAnimating = false; }, 1000);
+                        setTimeout(() => { heroScreen.style.transition = 'none'; isAnimating = false; }, 850);
                     } else if (currentStep > 1) {
                         changeStep(currentStep - 1);
                     }
@@ -286,7 +279,8 @@ document.addEventListener("DOMContentLoaded", () => {
         isAnimating = true;
         currentStep = newStep;
         updateStepUI();
-        setTimeout(() => { isAnimating = false; }, 1200); 
+        // REDUCIDO DE 1200ms A 850ms PARA MAYOR RESPONSIVIDAD (MENOS TRABADO)
+        setTimeout(() => { isAnimating = false; }, 850); 
     }
 
     function updateStepUI() {
@@ -308,7 +302,6 @@ document.addEventListener("DOMContentLoaded", () => {
             quoteScreen.classList.remove('pushed-up'); 
         } else if (currentStep >= 2 && currentStep < totalSteps - 1) {
             
-            // NAVEGANDO POR LAS GALERÍAS
             galleryScreen.classList.remove('final-step');
             if (isExpanded) {
                 logoWhite.style.opacity = '1'; logoBlack.style.opacity = '0';
@@ -323,14 +316,12 @@ document.addEventListener("DOMContentLoaded", () => {
         
         } else if (currentStep === totalSteps - 1) {
             
-            // PANTALLA DE DESPEDIDA
             galleryScreen.classList.add('final-step');
             logoWhite.style.opacity = '0'; logoBlack.style.opacity = '1';
             logoWhite.style.pointerEvents = 'none'; logoBlack.style.pointerEvents = 'auto';
             quoteScreen.classList.add('pushed-up');
             galleryScreen.classList.add('active');
             
-            // Hacemos que el último título se deslice hacia arriba para ocultarse
             const titlesTrack = document.getElementById('gallery-titles-track');
             titlesTrack.style.transform = `translateY(-${PORTFOLIO_DATA.sections.length * 120}px)`;
         }
@@ -436,7 +427,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const scale = Math.min((window.innerWidth * 0.98) / rect.width, (window.innerHeight * 0.98) / rect.height);
         
         requestAnimationFrame(() => {
-            activeClone.style.top = '50vh';
+            activeClone.style.top = '50dvh';
             activeClone.style.left = '50vw';
             activeClone.style.transform = `translate(-50%, -50%) scale(${scale})`;
         });
@@ -472,6 +463,7 @@ document.addEventListener("DOMContentLoaded", () => {
             logoWhite.style.pointerEvents = 'auto';
             logoBlack.style.pointerEvents = 'none';
 
+            // 1. Inicia la expansión suave del círculo amorfo
             frame.classList.add('expanded');
             
             prependHorizontalImages(currentStep - 2);
@@ -486,11 +478,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
             }, 50);
             
+            // 2. A mitad del crecimiento, desvanece la foto dejando el negro sólido puro
             setTimeout(() => {
                 const activeImg = document.querySelector('.gallery-img.active');
                 if(activeImg) activeImg.classList.add('darkened');
                 expandedView.classList.add('visible');
-            }, 600); 
+            }, 350); 
         }
     });
 
@@ -505,15 +498,17 @@ document.addEventListener("DOMContentLoaded", () => {
         logoWhite.style.pointerEvents = 'none';
         logoBlack.style.pointerEvents = 'auto';
 
+        // 1. Escondemos la galería y le devolvemos la opacidad a la foto principal
         expandedView.classList.remove('visible');
         const activeImg = document.querySelector('.gallery-img.active');
         if(activeImg) activeImg.classList.remove('darkened');
 
+        // 2. Esperamos a que la foto reaparezca, y luego encogemos el círculo suavemente
         setTimeout(() => {
             isExpanded = false;
             frame.classList.remove('expanded');
             setTimeout(() => { frame.style.borderRadius = generateAmorphousShape(); }, 50);
-        }, 500); 
+        }, 400); 
     }
 
     logoWhite.addEventListener('click', () => {
@@ -523,7 +518,7 @@ document.addEventListener("DOMContentLoaded", () => {
             
             changeStep(0);
             heroClipRadius = 100;
-            heroScreen.style.transition = 'clip-path 1s cubic-bezier(0.77, 0, 0.175, 1)';
+            heroScreen.style.transition = 'clip-path 0.85s cubic-bezier(0.77, 0, 0.175, 1)';
             heroScreen.style.clipPath = `circle(100% at 50% 50%)`;
             setTimeout(() => { heroScreen.style.transition = 'none'; }, 1000);
         }
